@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/tomerh2001/redacted-bandcamp-price-userscript/compare/v1.1.0...v1.2.0) (2026-03-16)
+
+
+### Features
+
+* use currency symbols in notes ([d67fffb](https://github.com/tomerh2001/redacted-bandcamp-price-userscript/commit/d67fffb39aa91cecf240de7c47f903c675ede6f8))
+
 # [1.1.0](https://github.com/tomerh2001/redacted-bandcamp-price-userscript/compare/v1.0.0...v1.1.0) (2026-03-16)
 
 
