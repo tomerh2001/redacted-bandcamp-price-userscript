@@ -74,7 +74,7 @@ test('buildBandcampNote returns a digital price when the download is available n
 
   assert.deepEqual(buildBandcampNote(pageState), {
     kind: 'available',
-    text: 'EUR 4.00',
+    text: '€4.00',
   });
 });
 
@@ -89,12 +89,12 @@ test('buildBandcampNote uses a custom price label when one is provided', () => {
   );
 
   assert.deepEqual(buildBandcampNote(pageState, {
-    priceText: '~USD 4.35',
-    title: 'Converted from EUR 4.00',
+    priceText: '~$4.35',
+    title: 'Converted from €4.00',
   }), {
     kind: 'available',
-    text: '~USD 4.35',
-    title: 'Converted from EUR 4.00',
+    text: '~$4.35',
+    title: 'Converted from €4.00',
   });
 });
 

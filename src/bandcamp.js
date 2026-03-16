@@ -152,12 +152,18 @@ export function formatBandcampPrice(amount, currency) {
   }
 
   const normalizedCurrency = normalizeCurrencyCode(currency) ?? '';
-  if (normalizedCurrency === 'USD') {
-    return `USD ${normalizedAmount.toFixed(2)}`;
-  }
-
   if (normalizedCurrency) {
-    return `${normalizedCurrency} ${normalizedAmount.toFixed(2)}`;
+    try {
+      return new Intl.NumberFormat('en', {
+        style: 'currency',
+        currency: normalizedCurrency,
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(normalizedAmount);
+    } catch {
+      return `${normalizedCurrency} ${normalizedAmount.toFixed(2)}`;
+    }
   }
 
   return normalizedAmount.toFixed(2);
