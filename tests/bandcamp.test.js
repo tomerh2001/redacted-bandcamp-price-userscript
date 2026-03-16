@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildBandcampNote, normalizeBandcampUrl, parseBandcampPageState } from '../src/bandcamp.js';
+import {
+  buildBandcampNote,
+  convertAmount,
+  normalizeBandcampUrl,
+  parseBandcampPageState,
+} from '../src/bandcamp.js';
 
 function buildBandcampFixture({
   currency = 'USD',
@@ -69,7 +74,27 @@ test('buildBandcampNote returns a digital price when the download is available n
 
   assert.deepEqual(buildBandcampNote(pageState), {
     kind: 'available',
-    text: 'digital EUR 4.00',
+    text: 'EUR 4.00',
+  });
+});
+
+test('buildBandcampNote uses a custom price label when one is provided', () => {
+  const pageState = parseBandcampPageState(
+    buildBandcampFixture({
+      currency: 'EUR',
+      minimumPrice: 4,
+      hasDigitalDownload: true,
+      isPreorder: false,
+    }),
+  );
+
+  assert.deepEqual(buildBandcampNote(pageState, {
+    priceText: '~USD 4.35',
+    title: 'Converted from EUR 4.00',
+  }), {
+    kind: 'available',
+    text: '~USD 4.35',
+    title: 'Converted from EUR 4.00',
   });
 });
 
@@ -115,4 +140,15 @@ test('buildBandcampNote reports when no web version is sold', () => {
     kind: 'unavailable',
     text: 'no web version sold',
   });
+});
+
+test('convertAmount converts via ECB-style rates', () => {
+  assert.equal(
+    convertAmount(4, 'EUR', 'USD', { EUR: 1, USD: 1.2 }),
+    4.8,
+  );
+  assert.equal(
+    convertAmount(6, 'USD', 'GBP', { EUR: 1, USD: 1.2, GBP: 0.8 }),
+    4,
+  );
 });

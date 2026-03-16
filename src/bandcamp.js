@@ -7,6 +7,20 @@ const DIGITAL_ITEM_RE =
   /<li\b[^>]*class="[^"]*\bbuyItem\b[^"]*\bdigital\b[^"]*"[^>]*>[\s\S]*?<\/li>/i;
 const DIGITAL_CURRENCY_RE =
   /class="[^"]*\bbuyItemExtra\b[^"]*\bsecondaryText\b[^"]*">\s*([A-Z]{3})\s*</i;
+const ECB_RATE_RE = /currency=['"]([A-Z]{3})['"]\s+rate=['"]([0-9.]+)['"]/g;
+
+export function normalizeCurrencyCode(rawCurrency) {
+  if (typeof rawCurrency !== 'string') {
+    return null;
+  }
+
+  const normalizedCurrency = rawCurrency.trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(normalizedCurrency)) {
+    return null;
+  }
+
+  return normalizedCurrency;
+}
 
 export function normalizeBandcampUrl(rawUrl) {
   try {
@@ -72,17 +86,17 @@ function parseDigitalCurrency(pageHtml) {
   const digitalBlock = DIGITAL_ITEM_RE.exec(pageHtml)?.[0] ?? '';
   const fromDigitalBlock = DIGITAL_CURRENCY_RE.exec(digitalBlock)?.[1];
   if (fromDigitalBlock) {
-    return fromDigitalBlock.toUpperCase();
+    return normalizeCurrencyCode(fromDigitalBlock);
   }
 
   const fromPage = DIGITAL_CURRENCY_RE.exec(pageHtml)?.[1];
   if (fromPage) {
-    return fromPage.toUpperCase();
+    return normalizeCurrencyCode(fromPage);
   }
 
   const cartCurrency = parseCartData(pageHtml)?.currency;
   if (typeof cartCurrency === 'string' && cartCurrency.trim()) {
-    return cartCurrency.trim().toUpperCase();
+    return normalizeCurrencyCode(cartCurrency);
   }
 
   return null;
@@ -137,7 +151,7 @@ export function formatBandcampPrice(amount, currency) {
     return null;
   }
 
-  const normalizedCurrency = typeof currency === 'string' ? currency.trim().toUpperCase() : '';
+  const normalizedCurrency = normalizeCurrencyCode(currency) ?? '';
   if (normalizedCurrency === 'USD') {
     return `USD ${normalizedAmount.toFixed(2)}`;
   }
@@ -149,7 +163,50 @@ export function formatBandcampPrice(amount, currency) {
   return normalizedAmount.toFixed(2);
 }
 
-export function buildBandcampNote(pageState) {
+export function parseEcbExchangeRates(xmlText) {
+  const rates = {
+    EUR: 1,
+  };
+
+  for (const match of xmlText.matchAll(ECB_RATE_RE)) {
+    const currency = normalizeCurrencyCode(match[1]);
+    const rate = Number(match[2]);
+    if (!currency || Number.isNaN(rate) || rate <= 0) {
+      continue;
+    }
+
+    rates[currency] = rate;
+  }
+
+  return rates;
+}
+
+export function convertAmount(amount, fromCurrency, toCurrency, rates) {
+  const normalizedAmount = Number(amount);
+  if (Number.isNaN(normalizedAmount) || normalizedAmount < 0) {
+    return null;
+  }
+
+  const sourceCurrency = normalizeCurrencyCode(fromCurrency);
+  const targetCurrency = normalizeCurrencyCode(toCurrency);
+  if (!sourceCurrency || !targetCurrency) {
+    return null;
+  }
+
+  if (sourceCurrency === targetCurrency) {
+    return normalizedAmount;
+  }
+
+  const sourceRate = sourceCurrency === 'EUR' ? 1 : Number(rates[sourceCurrency]);
+  const targetRate = targetCurrency === 'EUR' ? 1 : Number(rates[targetCurrency]);
+  if (Number.isNaN(sourceRate) || Number.isNaN(targetRate) || sourceRate <= 0 || targetRate <= 0) {
+    return null;
+  }
+
+  return (normalizedAmount / sourceRate) * targetRate;
+}
+
+export function buildBandcampNote(pageState, options = {}) {
   if (!pageState.hasDigitalDownload) {
     return {
       kind: 'unavailable',
@@ -171,9 +228,15 @@ export function buildBandcampNote(pageState) {
     };
   }
 
-  const formattedPrice = formatBandcampPrice(pageState.priceAmount, pageState.priceCurrency);
-  return {
+  const formattedPrice =
+    (typeof options.priceText === 'string' && options.priceText.trim()) ||
+    formatBandcampPrice(pageState.priceAmount, pageState.priceCurrency);
+  const note = {
     kind: 'available',
-    text: formattedPrice ? `digital ${formattedPrice}` : 'digital version available',
+    text: formattedPrice || 'version available',
   };
+  if (typeof options.title === 'string' && options.title.trim()) {
+    note.title = options.title.trim();
+  }
+  return note;
 }

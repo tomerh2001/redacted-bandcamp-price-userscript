@@ -18,6 +18,9 @@ const userscriptHeader = `// ==UserScript==
 // @description  Annotate RED request-page Bandcamp links with digital availability and price details.
 // @author       ${packageJson.author}
 // @match        https://redacted.sh/requests.php?action=view*
+// @grant        GM_getValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @connect      *
 // @run-at       document-idle
