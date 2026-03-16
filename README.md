@@ -21,14 +21,6 @@ The script scans the request description and comments, fetches each linked Bandc
 
 3. Confirm the install prompt in Violentmonkey.
 
-## GitHub Actions Secret
-
-This repository only requires one custom Actions secret:
-
-| Name | Description | Required |
-| --- | --- | --- |
-| `GH_TOKEN` | GitHub personal access token used by `semantic-release` | Yes |
-
 ## Development
 
 ```bash
