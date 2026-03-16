@@ -1,0 +1,179 @@
+const BANDCAMP_PATH_RE = /^\/(?:album|track)\//i;
+const HTML_TAG_RE = /<[^>]+>/g;
+const TRALBUM_ATTR_RE = /data-tralbum="([^"]+)"/i;
+const CART_ATTR_RE = /data-cart="([^"]+)"/i;
+const DIGITAL_BLOCK_RE = /class="[^"]*\bbuyItem\b[^"]*\bdigital\b[^"]*"/i;
+const DIGITAL_ITEM_RE =
+  /<li\b[^>]*class="[^"]*\bbuyItem\b[^"]*\bdigital\b[^"]*"[^>]*>[\s\S]*?<\/li>/i;
+const DIGITAL_CURRENCY_RE =
+  /class="[^"]*\bbuyItemExtra\b[^"]*\bsecondaryText\b[^"]*">\s*([A-Z]{3})\s*</i;
+
+export function normalizeBandcampUrl(rawUrl) {
+  try {
+    const parsed = new URL(rawUrl);
+    if (!parsed.hostname.toLowerCase().endsWith('.bandcamp.com')) {
+      return null;
+    }
+
+    const cleanedPath = parsed.pathname.replace(/\/+$/, '');
+    if (!BANDCAMP_PATH_RE.test(`${cleanedPath}/`)) {
+      return null;
+    }
+
+    return `${parsed.origin}${cleanedPath}`;
+  } catch {
+    return null;
+  }
+}
+
+function decodeHtmlEntities(value) {
+  if (!value) {
+    return '';
+  }
+
+  if (typeof document !== 'undefined') {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = value;
+    return textarea.value;
+  }
+
+  return value
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#34;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&apos;', "'")
+    .replaceAll('&amp;', '&')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>');
+}
+
+function parseEmbeddedJson(pageHtml, pattern) {
+  const match = pattern.exec(pageHtml);
+  if (!match) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(decodeHtmlEntities(match[1]));
+  } catch {
+    return null;
+  }
+}
+
+function parseTralbumData(pageHtml) {
+  return parseEmbeddedJson(pageHtml, TRALBUM_ATTR_RE);
+}
+
+function parseCartData(pageHtml) {
+  return parseEmbeddedJson(pageHtml, CART_ATTR_RE);
+}
+
+function parseDigitalCurrency(pageHtml) {
+  const digitalBlock = DIGITAL_ITEM_RE.exec(pageHtml)?.[0] ?? '';
+  const fromDigitalBlock = DIGITAL_CURRENCY_RE.exec(digitalBlock)?.[1];
+  if (fromDigitalBlock) {
+    return fromDigitalBlock.toUpperCase();
+  }
+
+  const fromPage = DIGITAL_CURRENCY_RE.exec(pageHtml)?.[1];
+  if (fromPage) {
+    return fromPage.toUpperCase();
+  }
+
+  const cartCurrency = parseCartData(pageHtml)?.currency;
+  if (typeof cartCurrency === 'string' && cartCurrency.trim()) {
+    return cartCurrency.trim().toUpperCase();
+  }
+
+  return null;
+}
+
+function parseDigitalPriceAmount(tralbum) {
+  const current = tralbum?.current ?? {};
+  for (const key of ['minimum_price', 'minimum_price_nonzero', 'set_price']) {
+    const value = current[key];
+    if (value === null || value === undefined || value === '') {
+      continue;
+    }
+
+    const amount = Number(value);
+    if (!Number.isNaN(amount)) {
+      return amount;
+    }
+  }
+
+  return null;
+}
+
+export function parseBandcampPageState(pageHtml) {
+  const tralbum = parseTralbumData(pageHtml);
+  const hasDigitalDownload = DIGITAL_BLOCK_RE.test(pageHtml);
+  const isPreorder = Boolean(
+    hasDigitalDownload &&
+      (tralbum?.is_preorder ||
+        tralbum?.album_is_preorder ||
+        tralbum?.download_is_preorder ||
+        tralbum?.current?.album_is_preorder ||
+        tralbum?.current?.download_is_preorder),
+  );
+
+  return {
+    hasDigitalDownload,
+    availableNow: hasDigitalDownload && !isPreorder,
+    isPreorder,
+    priceAmount: hasDigitalDownload ? parseDigitalPriceAmount(tralbum) : null,
+    priceCurrency: hasDigitalDownload ? parseDigitalCurrency(pageHtml) : null,
+    pageText: decodeHtmlEntities(pageHtml.replace(HTML_TAG_RE, ' ')),
+  };
+}
+
+export function formatBandcampPrice(amount, currency) {
+  if (amount === null || amount === undefined) {
+    return null;
+  }
+
+  const normalizedAmount = Number(amount);
+  if (Number.isNaN(normalizedAmount)) {
+    return null;
+  }
+
+  const normalizedCurrency = typeof currency === 'string' ? currency.trim().toUpperCase() : '';
+  if (normalizedCurrency === 'USD') {
+    return `USD ${normalizedAmount.toFixed(2)}`;
+  }
+
+  if (normalizedCurrency) {
+    return `${normalizedCurrency} ${normalizedAmount.toFixed(2)}`;
+  }
+
+  return normalizedAmount.toFixed(2);
+}
+
+export function buildBandcampNote(pageState) {
+  if (!pageState.hasDigitalDownload) {
+    return {
+      kind: 'unavailable',
+      text: 'no web version sold',
+    };
+  }
+
+  if (pageState.isPreorder) {
+    return {
+      kind: 'preorder',
+      text: 'digital preorder, not released yet',
+    };
+  }
+
+  if (pageState.priceAmount === 0) {
+    return {
+      kind: 'available',
+      text: 'free digital download',
+    };
+  }
+
+  const formattedPrice = formatBandcampPrice(pageState.priceAmount, pageState.priceCurrency);
+  return {
+    kind: 'available',
+    text: formattedPrice ? `digital ${formattedPrice}` : 'digital version available',
+  };
+}
