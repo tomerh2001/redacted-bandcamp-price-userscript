@@ -15,9 +15,10 @@ const userscriptHeader = `// ==UserScript==
 // @name         RED Bandcamp Price Userscript
 // @namespace    https://github.com/tomerh2001/redacted-bandcamp-price-userscript
 // @version      ${packageJson.version}
-// @description  Annotate RED request-page Bandcamp links with digital availability and price details.
+// @description  Annotate RED and OPS request-page Bandcamp links with availability and price details.
 // @author       ${packageJson.author}
 // @match        https://redacted.sh/requests.php?action=view*
+// @match        https://orpheus.network/requests.php?action=view*
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_setValue

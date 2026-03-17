@@ -1,9 +1,9 @@
-# RED Bandcamp Price Userscript
+# RED / OPS Bandcamp Price Userscript
 
 [![semantic-release](https://img.shields.io/badge/semantic--release-active-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 [![CodeQL](../../actions/workflows/codeql.yml/badge.svg)](../../actions/workflows/codeql.yml)
 
-Annotates Bandcamp links on RED request pages with one of four inline notes:
+Annotates Bandcamp links on RED and OPS request pages with one of four inline notes:
 
 - `€4.00`
 - `free digital download`
@@ -11,6 +11,11 @@ Annotates Bandcamp links on RED request pages with one of four inline notes:
 - `no web version sold`
 
 The script scans the request description and comments, fetches each linked Bandcamp page once, and injects the result directly after every Bandcamp link it finds.
+
+Supported tracker hosts:
+
+- `redacted.sh`
+- `orpheus.network`
 
 You can optionally set a target currency from the Violentmonkey menu. When set, paid releases are shown in that currency instead, for example `~$4.35`, with the original price available in the note tooltip.
 
