@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/tomerh2001/redacted-bandcamp-price-userscript/compare/v1.2.0...v1.3.0) (2026-03-17)
+
+
+### Features
+
+* add OPS request page support ([342491a](https://github.com/tomerh2001/redacted-bandcamp-price-userscript/commit/342491a65a0a687f821155e9efa7c8272387d2ad))
+
 # [1.2.0](https://github.com/tomerh2001/redacted-bandcamp-price-userscript/compare/v1.1.0...v1.2.0) (2026-03-16)
 
 
