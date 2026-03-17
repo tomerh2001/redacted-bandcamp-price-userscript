@@ -1,6 +1,6 @@
 {
   "name": "redacted-bandcamp-price-userscript",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Violentmonkey userscript that annotates RED request pages with Bandcamp digital pricing and availability.",
   "author": "Tomer Horowitz",
   "type": "module",

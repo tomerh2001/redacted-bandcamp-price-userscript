@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/tomerh2001/redacted-bandcamp-price-userscript/compare/v1.3.0...v1.4.0) (2026-03-17)
+
+
+### Features
+
+* rename userscript for RED and OPS ([44d2f96](https://github.com/tomerh2001/redacted-bandcamp-price-userscript/commit/44d2f96ca11b0b20b4eadf020c315417a7d344fa))
+
 # [1.3.0](https://github.com/tomerh2001/redacted-bandcamp-price-userscript/compare/v1.2.0...v1.3.0) (2026-03-17)
 
 

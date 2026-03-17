@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RED / OPS Bandcamp Price Userscript
 // @namespace    https://github.com/tomerh2001/redacted-bandcamp-price-userscript
-// @version      1.3.0
+// @version      1.4.0
 // @description  Annotate RED and OPS request-page Bandcamp links with availability and price details.
 // @author       Tomer Horowitz
 // @match        https://redacted.sh/requests.php?action=view*
