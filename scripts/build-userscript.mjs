@@ -12,7 +12,7 @@ const outputDir = path.join(rootDir, 'dist');
 await mkdir(outputDir, { recursive: true });
 
 const userscriptHeader = `// ==UserScript==
-// @name         RED Bandcamp Price Userscript
+// @name         RED / OPS Bandcamp Price Userscript
 // @namespace    https://github.com/tomerh2001/redacted-bandcamp-price-userscript
 // @version      ${packageJson.version}
 // @description  Annotate RED and OPS request-page Bandcamp links with availability and price details.
